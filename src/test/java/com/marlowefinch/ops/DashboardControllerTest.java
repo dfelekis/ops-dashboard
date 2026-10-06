@@ -74,6 +74,33 @@ class DashboardControllerTest {
     }
 
     @Test
+    void summaryAcceptsAnExplicitRangeAndMatchesKpis() throws Exception {
+        mvc.perform(get("/api/summary").param("from", "2026-07-01").param("to", "2026-07-31"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.from").value("2026-07-01"))
+                .andExpect(jsonPath("$.to").value("2026-07-31"))
+                .andExpect(jsonPath("$.orders").value(679))
+                .andExpect(jsonPath("$.revenue").value(480209.5))
+                .andExpect(jsonPath("$.worstCarrier").isString())
+                .andExpect(jsonPath("$.busiestTicketCategory").isString());
+    }
+
+    @Test
+    void summaryWithFromAfterToIsEmptyLikeKpis() throws Exception {
+        mvc.perform(get("/api/summary").param("from", "2026-09-21").param("to", "2026-09-01"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.orders").value(0))
+                .andExpect(jsonPath("$.worstCarrier").value(org.hamcrest.Matchers.nullValue()))
+                .andExpect(jsonPath("$.busiestTicketCategory").value(org.hamcrest.Matchers.nullValue()));
+    }
+
+    @Test
+    void summaryMalformedFromBehavesLikeKpis() {
+        ResponseEntity<String> response = http.getForEntity("/api/summary?from=next-tuesday", String.class);
+        assertThat(response.getStatusCode().is5xxServerError()).isTrue();
+    }
+
+    @Test
     void kpisAcceptAnExplicitRange() throws Exception {
         mvc.perform(get("/api/kpis").param("from", "2026-07-01").param("to", "2026-07-31"))
                 .andExpect(status().isOk())
