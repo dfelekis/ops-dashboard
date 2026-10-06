@@ -48,6 +48,32 @@ class DashboardControllerTest {
     }
 
     @Test
+    void summaryDefaultsToTheLast30DaysAndNamesTheWorstCarrierAndBusiestCategory() throws Exception {
+        mvc.perform(get("/api/summary"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.from").value("2026-08-22"))
+                .andExpect(jsonPath("$.to").value("2026-09-21"))
+                .andExpect(jsonPath("$.onTimeRate").value(0.937))
+                .andExpect(jsonPath("$.openTickets").value(114))
+                .andExpect(jsonPath("$.revenue").value(360095.5))
+                .andExpect(jsonPath("$.orders").value(624))
+                .andExpect(jsonPath("$.worstCarrier").value("Kessler Logistics"))
+                .andExpect(jsonPath("$.busiestTicketCategory").value("Delivery delay"));
+    }
+
+    @Test
+    void summaryForAnEmptyRangeHasNullNames() throws Exception {
+        mvc.perform(get("/api/summary").param("from", "2020-01-01").param("to", "2020-01-31"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.from").value("2020-01-01"))
+                .andExpect(jsonPath("$.to").value("2020-01-31"))
+                .andExpect(jsonPath("$.onTimeRate").value(org.hamcrest.Matchers.nullValue()))
+                .andExpect(jsonPath("$.orders").value(0))
+                .andExpect(jsonPath("$.worstCarrier").value(org.hamcrest.Matchers.nullValue()))
+                .andExpect(jsonPath("$.busiestTicketCategory").value(org.hamcrest.Matchers.nullValue()));
+    }
+
+    @Test
     void kpisAcceptAnExplicitRange() throws Exception {
         mvc.perform(get("/api/kpis").param("from", "2026-07-01").param("to", "2026-07-31"))
                 .andExpect(status().isOk())
